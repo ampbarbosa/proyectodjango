@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Información de Empleados</title>
+    {% load static %}
+    <!-- Incluye Bootstrap -->
+    <link href="https://stackpath.amazonaws.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Incluye DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('{% static "images/hm.png" %}');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #FBC5F2; /* Fondo rosa pastel */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #56D5F8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #56D5F8;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            background-color: #56D5F8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #B7ECFF;
+        }
+        .add-user-button {
+            margin-top: 20px;
+            background-color: #6c757d;
+        }
+        .add-user-button:hover {
+            background-color: #5a6268;
+        }
+        .back-btn {
+            margin-top: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 10px 20px;
+            display: inline-block; /* Asegura que se vea bien */
+        }
+        .back-btn:hover {
+            background-color: #0056b3;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Editar Información de Empleados</h2>
+        <!-- Mensajes de alerta -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <table id="employeeTable" class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Cargo</th>
+                    <th>Horas</th>
+                    <th>Salario por Hora</th>
+                    <th>Código de Barras</th>
+                    <th>Imagen de Código de Barras</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <td><input type="text" name="user_id" value="{{ employee.id }}" readonly></td>
+                        <td><input type="text" name="username" value="{{ employee.username }}"></td>
+                        <td><input type="text" name="email" value="{{ employee.email }}"></td>
+                        <td><input type="text" name="cargo" value="{{ employee.cargo }}"></td>
+                        <td><input type="number" name="horas" value="{{ employee.horas }}"></td>
+                        <td><input type="text" name="salario_por_hora" value="{{ employee.salario_por_hora|floatformat:2 }}" step="0.01"></td>
+                        <td><input type="number" name="cbarra" value="{{ employee.cbarra }}"></td>
+                        <td>
+                            {% if employee.barcode_image %}
+                                <img src="{{ employee.barcode_image.url }}" alt="Código de Barras" style="width: 100%; max-width: 100px; height: auto;">
+                            {% else %}
+                                No generado
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="submit">Guardar</button>
+                            <button type="button" class="delete-btn" onclick="confirmDelete('{{ employee.id }}')">Eliminar</button>
+                        </td>
+                    </form>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button id="add-user-button" type="button" class="add-user-button btn btn-secondary">Agregar nuevo usuario</button>
+        <br><br> <!-- Añadir espacio entre los botones -->
+        <!-- Botón para regresar al inicio -->
+        <a href="{% url 'home' %}" class="btn back-btn">Regresar al Inicio</a>
+    </div>
+
+    <script>
+        document.getElementById('add-user-button').addEventListener('click', function() {
+            window.location.href = "{% url 'register' %}";
+        });
+
+        function confirmDelete(employeeId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este empleado?')) {
+                const url = "{% url 'delete_employee' 0 %}".replace('/0/', `/${employeeId}/`);
+                window.location.href = url;
+            }
+        }
+    </script>
+    <!-- Incluye jQuery, Popper.js, Bootstrap JS y DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcm.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#employeeTable').DataTable({
+                "paging": true,
+                "ordering": true,
+                "info": true,
+                "pageLength": 5,
+                "autoWidth": true,
+                "language": {
+                    "paginate": {
+                        "previous": "Anterior",
+                        "next": "Siguiente"
+                    },
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "emptyTable": "No hay datos disponibles",
+                    "lengthMenu": "Mostrar _MENU_ registros"
+                },
+                "dom": 'lrtip' // Quitar el buscador
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
